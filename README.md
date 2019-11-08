@@ -97,6 +97,11 @@ environments.</b>
 For more comprehensive details about the library usage and capabilities, please check the project
 net.wstech2.me.lib-j2me-https-client-samples.
 
+# Restrictions
+I guess you will not officially sign your application to make it trusted (you can only rely on baked in certificates for this and I guess a DigiCert certificate is too much money for this kind of vintage software development). 
+
+However, unsigned apps have restrictions. My Nokia does not let me connect to ports < 1024. This custom HTTPSConnection implementation helps me to circumvent certificate problems - but really to connect to a TLS web server, I have to have it running on port 2000 or so.
+
 # Security
 
 This is more or less retro programming. [Bouncy Castle 1.51 has holes](https://nvd.nist.gov/vuln/search/results?adv_search=true&cves=on&cpe_version=cpe%3A%2Fa%3Abouncycastle%3Alegion-of-the-bouncy-castle-java-crytography-api%3A1.51).
