@@ -15,6 +15,7 @@ It is released under the Apache License 2.0.
 * Makes it possible to send HTTP bodies (for POST requests)
 * comes with the Netbeans obfuscator plugin (and the correct ProGuard version) that is necessary
 * updates the Readme to save you hours of research that I had to go through
+* backports fixes for all known security issues.
 
 # Setup
 
@@ -98,10 +99,11 @@ For more comprehensive details about the library usage and capabilities, please 
 net.wstech2.me.lib-j2me-https-client-samples.
 
 # Restrictions
-I guess you will not officially sign your application to make it trusted (you can only rely on baked in certificates for this and I guess a DigiCert certificate is too much money for this kind of vintage software development). 
+I guess you will not officially sign your application to make it trusted (you can only rely on baked in certificates for this and I guess a DigiCert certificate is too much money for this kind of vintage software development).
 
 However, unsigned apps have restrictions. My Nokia does not let me connect to ports < 1024. This custom HTTPSConnection implementation helps me to circumvent certificate problems - but really to connect to a TLS web server, I have to have it running on port 2000 or so.
 
 # Security
 
-This is more or less retro programming. [Bouncy Castle 1.51 has holes](https://nvd.nist.gov/vuln/search/results?adv_search=true&cves=on&cpe_version=cpe%3A%2Fa%3Abouncycastle%3Alegion-of-the-bouncy-castle-java-crytography-api%3A1.51).
+This is more or less retro programming. [Bouncy Castle 1.51 has security issues](https://nvd.nist.gov/vuln/search/results?adv_search=true&cves=on&cpe_version=cpe%3A%2Fa%3Abouncycastle%3Alegion-of-the-bouncy-castle-java-crytography-api%3A1.51).
+   Fixes are backported, but still use with caution.
