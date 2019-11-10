@@ -68,7 +68,7 @@ public class IESEngine
 
     /**
      * set up for use in conjunction with a block cipher to handle the
-     * message.
+     * message.It is <b>strongly</b> recommended that the cipher is not in ECB mode.
      *
      * @param agree  the key agreement used as the basis for the encryption
      * @param kdf    the key derivation function used for byte generation
@@ -222,9 +222,9 @@ public class IESEngine
             }
             else
             {
-                cipher.init(true, new KeyParameter(K1));    
+                cipher.init(true, new KeyParameter(K1));
             }
-            
+
             C = new byte[cipher.getOutputSize(inLen)];
             len = cipher.processBytes(in, inOff, inLen, C, 0);
             len += cipher.doFinal(C, len);
@@ -270,8 +270,8 @@ public class IESEngine
         int inLen)
         throws InvalidCipherTextException
     {
-        byte[] M = null, K = null, K1 = null, K2 = null;
-        int len;
+      byte[] M, K, K1, K2;
+      int len = 0;
 
         // Ensure that the length of the input is greater than the MAC in bytes
         if (inLen <= (param.getMacKeySize() / 8))
@@ -279,6 +279,7 @@ public class IESEngine
             throw new InvalidCipherTextException("Length of input must be greater than the MAC");
         }
 
+        // note order is important: set up keys, do simple encryptions, check mac, do final encryption.
         if (cipher == null)
         {
             // Streaming mode.
@@ -299,18 +300,17 @@ public class IESEngine
                 System.arraycopy(K, K1.length, K2, 0, K2.length);
             }
 
+            // process the message
             M = new byte[K1.length];
 
             for (int i = 0; i != K1.length; i++)
             {
                 M[i] = (byte)(in_enc[inOff + V.length + i] ^ K1[i]);
             }
-
-            len = K1.length;
         }
         else
         {
-            // Block cipher mode.        
+            // Block cipher mode.
             K1 = new byte[((IESWithCipherParameters)param).getCipherKeySize() / 8];
             K2 = new byte[param.getMacKeySize() / 8];
             K = new byte[K1.length + K2.length];
@@ -326,10 +326,12 @@ public class IESEngine
             }
             else
             {
-                cipher.init(false, new KeyParameter(K1));    
+                cipher.init(false, new KeyParameter(K1));
             }
 
             M = new byte[cipher.getOutputSize(inLen - V.length - mac.getMacSize())];
+
+            // do initial processing
             len = cipher.processBytes(in_enc, inOff + V.length, inLen - V.length - mac.getMacSize(), M, 0);
             len += cipher.doFinal(M, len);
         }
@@ -364,12 +366,18 @@ public class IESEngine
 
         if (!Arrays.constantTimeAreEqual(T1, T2))
         {
-            throw new InvalidCipherTextException("Invalid MAC.");
+            throw new InvalidCipherTextException("invalid MAC.");
         }
 
-
-        // Output the message.
-        return Arrays.copyOfRange(M, 0, len);
+        if (cipher == null)
+        {
+           return M;
+        }
+        else
+        {
+           len += cipher.doFinal(M, len);
+           return Arrays.copyOfRange(M, 0, len);
+        }
     }
 
 
@@ -403,18 +411,22 @@ public class IESEngine
                 {
                     throw new InvalidCipherTextException("unable to recover ephemeral public key: " + e.getMessage(), e);
                 }
+                catch (IllegalArgumentException e)
+                {
+                    throw new InvalidCipherTextException("unable to recover ephemeral public key: " + e.getMessage(), e);
+                }
 
                 int encLength = (inLen - bIn.available());
                 this.V = Arrays.copyOfRange(in, inOff, inOff + encLength);
             }
         }
 
-        // Compute the common value and convert to byte array. 
+        // Compute the common value and convert to byte array.
         agree.init(privParam);
         BigInteger z = agree.calculateAgreement(pubParam);
         byte[] Z = BigIntegers.asUnsignedByteArray(agree.getFieldSize(), z);
 
-        // Create input to KDF.  
+        // Create input to KDF.
         byte[] VZ;
         if (V.length != 0)
         {

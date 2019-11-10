@@ -153,6 +153,10 @@ public class DSADigestSigner
         throws IOException
     {
         ASN1Sequence s = (ASN1Sequence)ASN1Primitive.fromByteArray(encoding);
+        if (s.size() != 2)
+        {
+            throw new IOException("malformed signature");
+        }
 
         return new BigInteger[]
         {

@@ -26,6 +26,7 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
  */
 public class DHAgreement
 {
+    private static final BigInteger ONE = BigInteger.valueOf(1);
     private DHPrivateKeyParameters  key;
     private DHParameters            dhParams;
     private BigInteger              privateValue;
@@ -49,7 +50,7 @@ public class DHAgreement
             kParam = (AsymmetricKeyParameter)param;
         }
 
-        
+
         if (!(kParam instanceof DHPrivateKeyParameters))
         {
             throw new IllegalArgumentException("DHEngine expects DHPrivateKeyParameters");
@@ -89,6 +90,11 @@ public class DHAgreement
 
         BigInteger p = dhParams.getP();
 
-        return message.modPow(key.getX(), p).multiply(pub.getY().modPow(privateValue, p)).mod(p);
+        BigInteger result = pub.getY().modPow(privateValue, p);
+        if (result.compareTo(ONE) == 0)
+        {
+            throw new IllegalStateException("Shared key can't be 1");
+        }
+        return message.modPow(key.getX(), p).multiply(result).mod(p);
     }
 }

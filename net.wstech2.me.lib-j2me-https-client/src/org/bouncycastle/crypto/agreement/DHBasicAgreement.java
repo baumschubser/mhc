@@ -20,6 +20,7 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
 public class DHBasicAgreement
     implements BasicAgreement
 {
+    private static final BigInteger ONE = BigInteger.valueOf(1);
     private DHPrivateKeyParameters  key;
     private DHParameters            dhParams;
 
@@ -54,7 +55,7 @@ public class DHBasicAgreement
 
     /**
      * given a short term public key from a given party calculate the next
-     * message in the agreement sequence. 
+     * message in the agreement sequence.
      */
     public BigInteger calculateAgreement(
         CipherParameters   pubKey)
@@ -66,6 +67,12 @@ public class DHBasicAgreement
             throw new IllegalArgumentException("Diffie-Hellman public key has wrong parameters.");
         }
 
-        return pub.getY().modPow(key.getX(), dhParams.getP());
+        BigInteger result = pub.getY().modPow(key.getX(), dhParams.getP());
+                if (result.compareTo(ONE) == 0)
+                {
+                    throw new IllegalStateException("Shared key can't be 1");
+                }
+
+        return result;
     }
 }
